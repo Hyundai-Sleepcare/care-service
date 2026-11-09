@@ -19,11 +19,15 @@ import com.hyundai.ngmb.ui.theme.*
 @Composable
 fun HomeScreen(
     selectedSeat: SeatZone,
+    runningSeats: Set<SeatZone>,
     profiles: List<SleepProfile>,
     currentProfile: SleepProfile,
     onSeatSelected: (SeatZone) -> Unit,
     onProfileSelected: (SleepProfile) -> Unit,
-    onConfirmPresetClick: () -> Unit
+    onConfirmPresetClick: () -> Unit,
+    onGoToRunningClick: () -> Unit,
+    onStartSleepClick: () -> Unit,
+    onStopSleepClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -31,7 +35,7 @@ fun HomeScreen(
             .padding(horizontal = 32.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        // 1. 상단 헤더 영역 (CABIN ZONE MATRIX / 케어 대상 좌석 선택)
+        // 1. 상단 헤더 영역
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -63,8 +67,12 @@ fun HomeScreen(
             ) {
                 Text(text = "● ", color = AmberPrimary, fontSize = 10.sp)
                 Text(
-                    text = "안전 운전 동기화 가동 중",
-                    color = TextSecondary,
+                    text = if (runningSeats.isNotEmpty()) {
+                        "현재 ${runningSeats.size}개 좌석 슬립 케어 작동 중"
+                    } else {
+                        "안전 운전 동기화 가동 중"
+                    },
+                    color = if (runningSeats.isNotEmpty()) AmberPrimary else TextSecondary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -78,6 +86,7 @@ fun HomeScreen(
         ) {
             VehicleFloorplanCard(
                 selectedSeat = selectedSeat,
+                runningSeats = runningSeats,
                 onSeatSelected = onSeatSelected,
                 modifier = Modifier
                     .weight(1.15f)
@@ -86,10 +95,14 @@ fun HomeScreen(
 
             TargetPassengerCard(
                 selectedSeat = selectedSeat,
+                isRunning = (selectedSeat in runningSeats),
                 profiles = profiles,
                 currentProfile = currentProfile,
                 onProfileSelected = onProfileSelected,
                 onConfirmPresetClick = onConfirmPresetClick,
+                onGoToRunningClick = onGoToRunningClick,
+                onStartSleepClick = onStartSleepClick,
+                onStopSleepClick = onStopSleepClick,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
@@ -101,6 +114,7 @@ fun HomeScreen(
 @Composable
 fun VehicleFloorplanCard(
     selectedSeat: SeatZone,
+    runningSeats: Set<SeatZone>,
     onSeatSelected: (SeatZone) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -112,7 +126,6 @@ fun VehicleFloorplanCard(
             .padding(24.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // 카드 상단 헤더
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -134,7 +147,6 @@ fun VehicleFloorplanCard(
             }
         }
 
-        // 가운데 2x2 좌석 그리드 (1열: 운전석/조수석, 2열: 2열 좌측/2열 우측)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -149,12 +161,14 @@ fun VehicleFloorplanCard(
                 SeatGridItem(
                     seat = SeatZone.DRIVER,
                     isSelected = (selectedSeat == SeatZone.DRIVER),
+                    isRunning = (SeatZone.DRIVER in runningSeats),
                     onClick = { onSeatSelected(SeatZone.DRIVER) },
                     modifier = Modifier.weight(1f)
                 )
                 SeatGridItem(
                     seat = SeatZone.PASSENGER,
                     isSelected = (selectedSeat == SeatZone.PASSENGER),
+                    isRunning = (SeatZone.PASSENGER in runningSeats),
                     onClick = { onSeatSelected(SeatZone.PASSENGER) },
                     modifier = Modifier.weight(1f)
                 )
@@ -168,26 +182,27 @@ fun VehicleFloorplanCard(
                 SeatGridItem(
                     seat = SeatZone.REAR_LEFT,
                     isSelected = (selectedSeat == SeatZone.REAR_LEFT),
+                    isRunning = (SeatZone.REAR_LEFT in runningSeats),
                     onClick = { onSeatSelected(SeatZone.REAR_LEFT) },
                     modifier = Modifier.weight(1f)
                 )
                 SeatGridItem(
                     seat = SeatZone.REAR_RIGHT,
                     isSelected = (selectedSeat == SeatZone.REAR_RIGHT),
+                    isRunning = (SeatZone.REAR_RIGHT in runningSeats),
                     onClick = { onSeatSelected(SeatZone.REAR_RIGHT) },
                     modifier = Modifier.weight(1f)
                 )
             }
         }
 
-        // 하단 범례 (선택됨 / 선택 가능 / 비활성)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(text = "● ", color = AmberPrimary, fontSize = 10.sp)
-            Text(text = "선택됨     ", color = TextSecondary, fontSize = 12.sp)
+            Text(text = "선택됨 / 작동 중     ", color = TextSecondary, fontSize = 12.sp)
 
             Text(text = "● ", color = TextSecondary, fontSize = 10.sp)
             Text(text = "선택 가능     ", color = TextSecondary, fontSize = 12.sp)
@@ -202,6 +217,7 @@ fun VehicleFloorplanCard(
 fun SeatGridItem(
     seat: SeatZone,
     isSelected: Boolean,
+    isRunning: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -219,15 +235,14 @@ fun SeatGridItem(
                 }
             )
             .border(
-                width = if (isSelected) 1.5.dp else 1.dp,
-                color = if (isSelected) AmberPrimary else SleepBorder,
+                width = if (isSelected || isRunning) 1.5.dp else 1.dp,
+                color = if (isSelected || isRunning) AmberPrimary else SleepBorder,
                 shape = RoundedCornerShape(18.dp)
             )
             .clickable(enabled = seat.isSelectable) { onClick() }
             .padding(18.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // 상단: 좌석 아이콘 + 우측 상태 표시(선택됨 뱃지 / 자물쇠 / 점)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -241,7 +256,7 @@ fun SeatGridItem(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "💺",
+                    text = if (isRunning) "🌙" else "💺",
                     fontSize = 16.sp,
                     color = if (isSelected) TextOnAmber else TextSecondary
                 )
@@ -249,6 +264,22 @@ fun SeatGridItem(
 
             when {
                 isDriver -> Text(text = "🔒", fontSize = 14.sp, color = TextMuted)
+                isRunning -> {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(AmberHighlight)
+                            .border(1.dp, AmberPrimary, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = "🌙 작동 중",
+                            color = AmberPrimary,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
                 isSelected -> {
                     Box(
                         modifier = Modifier
@@ -268,7 +299,6 @@ fun SeatGridItem(
             }
         }
 
-        // 하단: 좌석 이름 + 상태 문구
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = seat.label,
@@ -279,11 +309,17 @@ fun SeatGridItem(
             Text(
                 text = when {
                     isDriver -> "● 슬립 케어 불가 (운전자)"
+                    isRunning -> "🌙 슬립 케어 작동 중"
                     isSelected -> "슬립 대기 중"
                     else -> "선택 가능"
                 },
-                color = if (isDriver) TextMuted else TextSecondary,
-                fontSize = 12.sp
+                color = when {
+                    isDriver -> TextMuted
+                    isRunning -> AmberPrimary
+                    else -> TextSecondary
+                },
+                fontSize = 12.sp,
+                fontWeight = if (isRunning) FontWeight.Bold else FontWeight.Normal
             )
         }
     }
@@ -292,10 +328,14 @@ fun SeatGridItem(
 @Composable
 fun TargetPassengerCard(
     selectedSeat: SeatZone,
+    isRunning: Boolean,
     profiles: List<SleepProfile>,
     currentProfile: SleepProfile,
     onProfileSelected: (SleepProfile) -> Unit,
     onConfirmPresetClick: () -> Unit,
+    onGoToRunningClick: () -> Unit,
+    onStartSleepClick: () -> Unit,
+    onStopSleepClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -306,7 +346,6 @@ fun TargetPassengerCard(
             .padding(24.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // 상단: TARGET PASSENGER 헤더 + 선택된 좌석 이름
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -322,10 +361,15 @@ fun TargetPassengerCard(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .background(SleepCardSurface)
+                        .background(if (isRunning) AmberHighlight else SleepCardSurface)
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
-                    Text(text = "연동 준비 완료", color = TextSecondary, fontSize = 11.sp)
+                    Text(
+                        text = if (isRunning) "🌙 슬립 모드 작동 중" else "연동 준비 완료",
+                        color = if (isRunning) AmberPrimary else TextSecondary,
+                        fontSize = 11.sp,
+                        fontWeight = if (isRunning) FontWeight.Bold else FontWeight.Normal
+                    )
                 }
             }
 
@@ -336,13 +380,16 @@ fun TargetPassengerCard(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "도어 차광막 및 시트 릴렉스 모듈이 동기화됩니다.",
-                color = TextSecondary,
+                text = if (isRunning) {
+                    "'${currentProfile.name}' 프리셋으로 슬립 케어가 작동 중입니다."
+                } else {
+                    "도어 차광막 및 시트 릴렉스 모듈이 동기화됩니다."
+                },
+                color = if (isRunning) AmberPrimary else TextSecondary,
                 fontSize = 13.sp
             )
         }
 
-        // 가운데: 최근 적용 프리셋 요약 박스 (홈에서 바로 프로필 전환 가능)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -357,7 +404,11 @@ fun TargetPassengerCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "최근 적용 프리셋 (터치하여 변경)", color = TextSecondary, fontSize = 12.sp)
+                Text(
+                    text = if (isRunning) "현재 적용 중인 프리셋" else "최근 적용 프리셋 (터치하여 변경)",
+                    color = TextSecondary,
+                    fontSize = 12.sp
+                )
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(6.dp))
@@ -365,7 +416,7 @@ fun TargetPassengerCard(
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "1-Touch Ready",
+                        text = if (isRunning) "ACTIVE" else "1-Touch Ready",
                         color = AmberPrimary,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
@@ -373,7 +424,6 @@ fun TargetPassengerCard(
                 }
             }
 
-            // 홈 화면에서 바로 프로필(아내 / 첫째아들 / 둘째딸)을 고를 수 있는 칩 버튼들
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -421,7 +471,6 @@ fun TargetPassengerCard(
                 )
             }
 
-            // 선택된 프로필에 따라 바뀌는 3개 요약 칩 (열선 / 온도 / 무드등)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -444,7 +493,6 @@ fun TargetPassengerCard(
             }
         }
 
-        // 하단: 부가 기능 안내 + [슬립 프리셋 확인] 버튼
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -458,28 +506,87 @@ fun TargetPassengerCard(
                 Text(text = "🌙 눈부심 차단 모드", color = TextSecondary, fontSize = 12.sp)
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(AmberPrimary)
-                    .clickable { onConfirmPresetClick() }
-                    .padding(vertical = 16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "🎚️ 슬립 프리셋 확인",
-                    color = TextOnAmber,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            if (isRunning) {
+                // 슬립 모드가 작동 중일 때: [실행 화면 보기] + [프리셋 확인]
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1.3f)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(AmberPrimary)
+                            .clickable { onGoToRunningClick() }
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "🌙 실행 화면 보기",
+                            color = TextOnAmber,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
 
-            Text(
-                text = "좌석 변경 시 즉시 개별 맞춤 프리셋으로 갱신됩니다.",
-                color = TextMuted,
-                fontSize = 11.sp
-            )
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(DangerRed)
+                            .clickable { onStopSleepClick() }
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "⏻ 슬립 종료",
+                            color = TextPrimary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            } else {
+                // 대기 상태일 때: 홈에서 바로 켜는 [즉시 슬립 시작] + [프리셋 상세]
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1.3f)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(AmberPrimary)
+                            .clickable { onStartSleepClick() }
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "🌙 즉시 슬립 시작",
+                            color = TextOnAmber,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(SleepCardSurface)
+                            .border(1.dp, SleepBorder, RoundedCornerShape(14.dp))
+                            .clickable { onConfirmPresetClick() }
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "🎚️ 프리셋 상세",
+                            color = TextPrimary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
         }
     }
 }
