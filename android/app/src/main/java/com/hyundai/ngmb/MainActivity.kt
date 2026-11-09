@@ -34,6 +34,8 @@ fun SleepCareApp() {
     var currentTab by remember { mutableStateOf(SleepCareTab.HOME) }
     var selectedSeat by remember { mutableStateOf(SeatZone.PASSENGER) }
     var isSeatMenuOpen by remember { mutableStateOf(false) }
+    // 현재 슬립 모드가 작동 중인 좌석들을 기억하는 집합(Set)
+    var runningSeats by remember { mutableStateOf(setOf<SeatZone>()) }
 
     // 각 좌석별로 현재 선택된 프로필을 기억하는 상태 (조수석=아내, 2열좌측=첫째아들, 2열우측=둘째딸)
     var seatProfileMap by remember {
@@ -70,6 +72,7 @@ fun SleepCareApp() {
                 SleepCareTab.HOME -> {
                     HomeScreen(
                         selectedSeat = selectedSeat,
+                        runningSeats = runningSeats,
                         profiles = defaultProfiles,
                         currentProfile = currentProfile,
                         onSeatSelected = { selectedSeat = it },
@@ -77,7 +80,10 @@ fun SleepCareApp() {
                             // 현재 좌석의 프로필을 새로 누른 프로필로 변경!
                             seatProfileMap = seatProfileMap + (selectedSeat to newProfile)
                         },
-                        onConfirmPresetClick = { currentTab = SleepCareTab.PRESET }
+                        onConfirmPresetClick = { currentTab = SleepCareTab.PRESET },
+                        onGoToRunningClick = { currentTab = SleepCareTab.RUNNING},
+                        onStartSleepClick = {runningSeats = runningSeats + selectedSeat },
+                        onStopSleepClick = { runningSeats = runningSeats - selectedSeat }
                     )
                 }
                 SleepCareTab.PRESET -> {
@@ -89,8 +95,23 @@ fun SleepCareApp() {
                             seatProfileMap = seatProfileMap + (selectedSeat to newProfile)
                         },
                         onCustomSettingClick = { currentTab = SleepCareTab.SETTING },
-                        onStartSleepModeClick = { currentTab = SleepCareTab.RUNNING },
+                        onStartSleepModeClick = {
+                            runningSeats = runningSeats + selectedSeat
+                            currentTab = SleepCareTab.RUNNING
+                        },
                         onAddPresetClick = { currentTab = SleepCareTab.SETTING }
+                    )
+                }
+                SleepCareTab.RUNNING -> {
+                    RunningScreen(
+                        selectedSeat = selectedSeat,
+                        currentProfile = currentProfile,
+                        onAdjustClick = { currentTab = SleepCareTab.SETTING },
+                        onExitSleepMode = { _ ->
+                            // 종료 옵션 선택 시 홈 화면으로 복귀
+                            runningSeats = runningSeats - selectedSeat
+                            currentTab = SleepCareTab.HOME
+                        }
                     )
                 }
                 else -> {
