@@ -39,3 +39,48 @@ enum class SeatZone (
         isSelectable = true
     )
 }
+
+// 사람별 슬립 프리셋 프로필 데이터 모델
+data class SleepProfile(
+    val profileId: Int,
+    val name: String,
+    val avatarEmoji: String,
+    val profileTag: String,
+    val backrestSummary: String,
+    val seatHeatSummary: String,
+    val tempSummary: String,
+    val moodSummary: String
+)
+// 기본 가족 프로필 목록 (나중에 서버 API GET /api/v1/profiles 연동 시 교체될 데이터)
+val defaultProfiles = listOf(
+    SleepProfile(
+        profileId = 1,
+        name = "아내",
+        avatarEmoji = "👩",
+        profileTag = "35분 딥슬립 프로필",
+        backrestSummary = "등받이 릴랙스",
+        seatHeatSummary = "열선 2단계",
+        tempSummary = "23.0°C",
+        moodSummary = "앰버 무드"
+    ),
+    SleepProfile(
+        profileId = 2,
+        name = "첫째아들",
+        avatarEmoji = "👦",
+        profileTag = "표준 쾌적 수면 프로필",
+        backrestSummary = "등받이 표준",
+        seatHeatSummary = "통풍 1단계",
+        tempSummary = "21.5°C",
+        moodSummary = "소프트블루"
+    ),
+    SleepProfile(
+        profileId = 3,
+        name = "둘째딸",
+        avatarEmoji = "👧",
+        profileTag = "포근한 휴식 프로필",
+        backrestSummary = "등받이 릴랙스",
+        seatHeatSummary = "열선 1단계",
+        tempSummary = "24.0°C",
+        moodSummary = "라벤더 무드"
+    )
+)
