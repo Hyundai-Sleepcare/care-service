@@ -35,40 +35,68 @@ fun SleepCareApp() {
     var selectedSeat by remember { mutableStateOf(SeatZone.PASSENGER) }
     var isSeatMenuOpen by remember { mutableStateOf(false) }
 
+    // 각 좌석별로 현재 선택된 프로필을 기억하는 상태 (조수석=아내, 2열좌측=첫째아들, 2열우측=둘째딸)
+    var seatProfileMap by remember {
+        mutableStateOf(
+            mapOf(
+                SeatZone.PASSENGER to defaultProfiles[0],
+                SeatZone.REAR_LEFT to defaultProfiles[1],
+                SeatZone.REAR_RIGHT to defaultProfiles[2]
+            )
+        )
+    }
+
+    // 현재 선택된 좌석의 프로필 꺼내오기
+    val currentProfile = seatProfileMap[selectedSeat] ?: defaultProfiles[0]
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(SleepBackground)
             .systemBarsPadding()
     ) {
-        // 1. 공통 상단 네비게이션 바
         TopNavBar(
             currentTab = currentTab,
             selectedSeat = selectedSeat,
             onTabSelected = {
                 currentTab = it
                 isSeatMenuOpen = false
-                },
+            },
             onSeatButtonClick = { isSeatMenuOpen = !isSeatMenuOpen }
         )
 
-        // 2. 탭에 따라 바뀌는 본문 영역
         Box(modifier = Modifier.fillMaxSize()) {
-            // 본문 화면
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "현재 탭: ${currentTab.title} / 선택 좌석: ${selectedSeat.label}",
-                    color = TextPrimary,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
+            when (currentTab) {
+                SleepCareTab.HOME -> {
+                    HomeScreen(
+                        selectedSeat = selectedSeat,
+                        profiles = defaultProfiles,
+                        currentProfile = currentProfile,
+                        onSeatSelected = { selectedSeat = it },
+                        onProfileSelected = { newProfile ->
+                            // 현재 좌석의 프로필을 새로 누른 프로필로 변경!
+                            seatProfileMap = seatProfileMap + (selectedSeat to newProfile)
+                        },
+                        onConfirmPresetClick = { currentTab = SleepCareTab.PRESET }
+                    )
+                }
+                else -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "현재 탭: ${currentTab.title} / 선택 좌석: ${selectedSeat.label} (${currentProfile.name})",
+                            color = TextPrimary,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
-            // 좌석 버튼 눌렀을 때 우측 상단에 뜨는 팝오버
+
             if (isSeatMenuOpen) {
                 SeatSelectionPopover(
                     selectedSeat = selectedSeat,
