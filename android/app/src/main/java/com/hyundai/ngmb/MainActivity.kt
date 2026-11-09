@@ -80,6 +80,19 @@ fun SleepCareApp() {
                         onConfirmPresetClick = { currentTab = SleepCareTab.PRESET }
                     )
                 }
+                SleepCareTab.PRESET -> {
+                    PresetScreen(
+                        selectedSeat = selectedSeat,
+                        profiles = defaultProfiles,
+                        currentProfile = currentProfile,
+                        onProfileSelected = { newProfile ->
+                            seatProfileMap = seatProfileMap + (selectedSeat to newProfile)
+                        },
+                        onCustomSettingClick = { currentTab = SleepCareTab.SETTING },
+                        onStartSleepModeClick = { currentTab = SleepCareTab.RUNNING },
+                        onAddPresetClick = { currentTab = SleepCareTab.SETTING }
+                    )
+                }
                 else -> {
                     Box(
                         modifier = Modifier
