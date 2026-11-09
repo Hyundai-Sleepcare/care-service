@@ -21,7 +21,7 @@ import com.hyundai.ngmb.ui.theme.*
 fun RunningScreen(
     selectedSeat: SeatZone,
     currentProfile: SleepProfile,
-    onAdjustClick: () -> Unit,
+    onAdjustClick: (SettingSubTab) -> Unit,
     onExitSleepMode: (restorePrevious: Boolean) -> Unit
 ) {
     // [슬립 모드 종료] 버튼 클릭 시 종료 확인 모달을 띄울지 여부
@@ -96,7 +96,7 @@ fun RunningScreen(
                     badgeText = "릴렉스 포지션",
                     category = "좌석",
                     statusValue = "${currentProfile.backrestSummary} · ${currentProfile.seatHeatSummary}",
-                    onAdjustClick = onAdjustClick,
+                    onAdjustClick = { onAdjustClick(SettingSubTab.SEAT) },
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
@@ -107,7 +107,7 @@ fun RunningScreen(
                     badgeText = "저소음 집중",
                     category = "공조",
                     statusValue = "${currentProfile.tempSummary} · 풍량 2단계",
-                    onAdjustClick = onAdjustClick,
+                    onAdjustClick = { onAdjustClick(SettingSubTab.CLIMATE) },
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
@@ -118,7 +118,7 @@ fun RunningScreen(
                     badgeText = "멜라토닌 보호",
                     category = "조명",
                     statusValue = "${currentProfile.moodSummary} 30% · 독서등 OFF",
-                    onAdjustClick = onAdjustClick,
+                    onAdjustClick = { onAdjustClick(SettingSubTab.LIGHT) },
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()

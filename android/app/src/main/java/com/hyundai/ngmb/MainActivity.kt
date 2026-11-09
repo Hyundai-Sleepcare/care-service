@@ -34,6 +34,7 @@ fun SleepCareApp() {
     var currentTab by remember { mutableStateOf(SleepCareTab.HOME) }
     var selectedSeat by remember { mutableStateOf(SeatZone.PASSENGER) }
     var isSeatMenuOpen by remember { mutableStateOf(false) }
+    var selectedSettingSubTab by remember { mutableStateOf(SettingSubTab.SEAT) }
     // 현재 슬립 모드가 작동 중인 좌석들을 기억하는 집합(Set)
     var runningSeats by remember { mutableStateOf(setOf<SeatZone>()) }
 
@@ -106,11 +107,28 @@ fun SleepCareApp() {
                     RunningScreen(
                         selectedSeat = selectedSeat,
                         currentProfile = currentProfile,
-                        onAdjustClick = { currentTab = SleepCareTab.SETTING },
+                        onAdjustClick = { targetSubTab ->
+                            selectedSettingSubTab = targetSubTab
+                            currentTab = SleepCareTab.SETTING
+                        },
                         onExitSleepMode = { _ ->
                             // 종료 옵션 선택 시 홈 화면으로 복귀
                             runningSeats = runningSeats - selectedSeat
                             currentTab = SleepCareTab.HOME
+                        }
+                    )
+                }
+                SleepCareTab.SETTING -> {
+                    SettingScreen(
+                        currentProfile = currentProfile,
+                        initialSubTab = selectedSettingSubTab,
+                        onSaveProfilePreset = { updatedProfile ->
+                            seatProfileMap = seatProfileMap + (selectedSeat to updatedProfile)
+                        },
+                        onApplyAndRun = { updatedProfile ->
+                            seatProfileMap = seatProfileMap + (selectedSeat to updatedProfile)
+                            runningSeats = runningSeats + selectedSeat
+                            currentTab = SleepCareTab.RUNNING
                         }
                     )
                 }
