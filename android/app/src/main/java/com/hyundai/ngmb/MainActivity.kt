@@ -35,22 +35,30 @@ fun SleepCareApp() {
     var selectedSeat by remember { mutableStateOf(SeatZone.PASSENGER) }
     var isSeatMenuOpen by remember { mutableStateOf(false) }
     var selectedSettingSubTab by remember { mutableStateOf(SettingSubTab.SEAT) }
-    // 현재 슬립 모드가 작동 중인 좌석들을 기억하는 집합(Set)
     var runningSeats by remember { mutableStateOf(setOf<SeatZone>()) }
 
-    // 각 좌석별로 현재 선택된 프로필을 기억하는 상태 (조수석=아내, 2열좌측=첫째아들, 2열우측=둘째딸)
-    var seatProfileMap by remember {
+    // 전체 프로필 목록 상태 (추가/이름변경/삭제 가능!)
+    var profiles by remember { mutableStateOf(defaultProfiles) }
+
+    // 각 좌석별로 현재 선택된 프로필 ID를 기억
+    var seatProfileIdMap by remember {
         mutableStateOf(
             mapOf(
-                SeatZone.PASSENGER to defaultProfiles[0],
-                SeatZone.REAR_LEFT to defaultProfiles[1],
-                SeatZone.REAR_RIGHT to defaultProfiles[2]
+                SeatZone.PASSENGER to 1,
+                SeatZone.REAR_LEFT to 2,
+                SeatZone.REAR_RIGHT to 3
             )
         )
     }
 
     // 현재 선택된 좌석의 프로필 꺼내오기
-    val currentProfile = seatProfileMap[selectedSeat] ?: defaultProfiles[0]
+    val currentProfileId = seatProfileIdMap[selectedSeat] ?: profiles.first().profileId
+    val currentProfile = profiles.find { it.profileId == currentProfileId } ?: profiles.first()
+
+    // 프로필 프리셋이 수정되었을 때 목록을 업데이트하는 헬퍼 함수
+    fun updateProfileInList(updated: SleepProfile) {
+        profiles = profiles.map { if (it.profileId == updated.profileId) updated else it }
+    }
 
     Column(
         modifier = Modifier
@@ -74,33 +82,35 @@ fun SleepCareApp() {
                     HomeScreen(
                         selectedSeat = selectedSeat,
                         runningSeats = runningSeats,
-                        profiles = defaultProfiles,
+                        profiles = profiles,
                         currentProfile = currentProfile,
                         onSeatSelected = { selectedSeat = it },
                         onProfileSelected = { newProfile ->
-                            // 현재 좌석의 프로필을 새로 누른 프로필로 변경!
-                            seatProfileMap = seatProfileMap + (selectedSeat to newProfile)
+                            seatProfileIdMap = seatProfileIdMap + (selectedSeat to newProfile.profileId)
                         },
                         onConfirmPresetClick = { currentTab = SleepCareTab.PRESET },
-                        onGoToRunningClick = { currentTab = SleepCareTab.RUNNING},
-                        onStartSleepClick = {runningSeats = runningSeats + selectedSeat },
+                        onGoToRunningClick = { currentTab = SleepCareTab.RUNNING },
+                        onStartSleepClick = { runningSeats = runningSeats + selectedSeat },
                         onStopSleepClick = { runningSeats = runningSeats - selectedSeat }
                     )
                 }
                 SleepCareTab.PRESET -> {
                     PresetScreen(
                         selectedSeat = selectedSeat,
-                        profiles = defaultProfiles,
+                        profiles = profiles,
                         currentProfile = currentProfile,
                         onProfileSelected = { newProfile ->
-                            seatProfileMap = seatProfileMap + (selectedSeat to newProfile)
+                            seatProfileIdMap = seatProfileIdMap + (selectedSeat to newProfile.profileId)
                         },
-                        onCustomSettingClick = { currentTab = SleepCareTab.SETTING },
+                        onCustomSettingClick = {
+                            selectedSettingSubTab = SettingSubTab.SEAT
+                            currentTab = SleepCareTab.SETTING
+                        },
                         onStartSleepModeClick = {
                             runningSeats = runningSeats + selectedSeat
                             currentTab = SleepCareTab.RUNNING
                         },
-                        onAddPresetClick = { currentTab = SleepCareTab.SETTING }
+                        onAddPresetClick = { currentTab = SleepCareTab.MANAGE }
                     )
                 }
                 SleepCareTab.RUNNING -> {
@@ -112,7 +122,6 @@ fun SleepCareApp() {
                             currentTab = SleepCareTab.SETTING
                         },
                         onExitSleepMode = { _ ->
-                            // 종료 옵션 선택 시 홈 화면으로 복귀
                             runningSeats = runningSeats - selectedSeat
                             currentTab = SleepCareTab.HOME
                         }
@@ -123,29 +132,49 @@ fun SleepCareApp() {
                         currentProfile = currentProfile,
                         initialSubTab = selectedSettingSubTab,
                         onSaveProfilePreset = { updatedProfile ->
-                            seatProfileMap = seatProfileMap + (selectedSeat to updatedProfile)
+                            updateProfileInList(updatedProfile)
                         },
                         onApplyAndRun = { updatedProfile ->
-                            seatProfileMap = seatProfileMap + (selectedSeat to updatedProfile)
+                            updateProfileInList(updatedProfile)
                             runningSeats = runningSeats + selectedSeat
                             currentTab = SleepCareTab.RUNNING
                         }
                     )
                 }
-                else -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "현재 탭: ${currentTab.title} / 선택 좌석: ${selectedSeat.label} (${currentProfile.name})",
-                            color = TextPrimary,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                SleepCareTab.MANAGE -> {
+                    ManageScreen(
+                        profiles = profiles,
+                        onAddProfile = { newName ->
+                            val nextId = (profiles.maxOfOrNull { it.profileId } ?: 0) + 1
+                            val newProfile = SleepProfile(
+                                profileId = nextId,
+                                name = newName,
+                                avatarEmoji = "🙂",
+                                profileTag = "맞춤 슬립 프로필",
+                                backrestSummary = "등받이 릴랙스",
+                                seatHeatSummary = "열선 1단계",
+                                tempSummary = "23.5°C",
+                                moodSummary = "앰버 무드"
+                            )
+                            profiles = profiles + newProfile
+                            seatProfileIdMap = seatProfileIdMap + (selectedSeat to nextId)
+                        },
+                        onRenameProfile = { targetId, newName ->
+                            profiles = profiles.map {
+                                if (it.profileId == targetId) it.copy(name = newName) else it
+                            }
+                        },
+                        onDeleteProfile = { targetId ->
+                            if (profiles.size > 1) {
+                                profiles = profiles.filterNot { it.profileId == targetId }
+                            }
+                        },
+                        onEditPresetClick = { targetProfile ->
+                            seatProfileIdMap = seatProfileIdMap + (selectedSeat to targetProfile.profileId)
+                            selectedSettingSubTab = SettingSubTab.SEAT
+                            currentTab = SleepCareTab.SETTING
+                        }
+                    )
                 }
             }
 
