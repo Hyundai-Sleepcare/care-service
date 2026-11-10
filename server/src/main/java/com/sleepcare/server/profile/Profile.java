@@ -63,6 +63,16 @@ public class Profile {
         this.updatedAt = now;
     }
 
+    public void updatePreset(int backrestAngle, int seatHeatLevel, int seatVentLevel,
+                             BigDecimal temperatureCelsius, String ambientLightMood, Instant now) {
+        this.backrestAngle = backrestAngle;
+        this.seatHeatLevel = seatHeatLevel;
+        this.seatVentLevel = seatVentLevel;
+        this.temperatureCelsius = temperatureCelsius;
+        this.ambientLightMood = ambientLightMood;
+        this.updatedAt = now;
+    }
+
     public Long getProfileId() { return profileId; }
     public String getOwnerId() { return ownerId; }
     public String getName() { return name; }

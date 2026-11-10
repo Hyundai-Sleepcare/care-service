@@ -58,6 +58,19 @@ public class ProfileService {
         return ProfileResponse.from(profile);
     }
 
+    @Transactional
+    public ProfileResponse updatePreset(String ownerId, Long profileId, Preset preset) {
+        Profile profile = findOwned(ownerId, profileId);
+        profile.updatePreset(
+                preset.backrest().angle(),
+                preset.seatHeat().level(),
+                preset.seatVent().level(),
+                toOneDecimal(preset.temperature().targetCelsius()),
+                preset.ambientLight().mood().name(),
+                Instant.now());
+        return ProfileResponse.from(profile);
+    }
+
     // 없거나 다른 사용자의 프로필이면 404
     private Profile findOwned(String ownerId, Long profileId) {
         return profileRepository.findByProfileIdAndOwnerId(profileId, ownerId)

@@ -1,6 +1,7 @@
 package com.sleepcare.server.profile;
 
 import com.sleepcare.server.common.owner.OwnerIdInterceptor;
+import com.sleepcare.server.profile.dto.Preset;
 import com.sleepcare.server.profile.dto.ProfileCreateRequest;
 import com.sleepcare.server.profile.dto.ProfileListResponse;
 import com.sleepcare.server.profile.dto.ProfileNameRequest;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -53,5 +55,13 @@ public class ProfileController {
             @PathVariable Long profileId,
             @Valid @RequestBody ProfileNameRequest request) {
         return profileService.rename(ownerId, profileId, request);
+    }
+
+    @PutMapping("/{profileId}/preset")
+    public ProfileResponse updatePreset(
+            @RequestAttribute(OwnerIdInterceptor.ATTRIBUTE) String ownerId,
+            @PathVariable Long profileId,
+            @Valid @RequestBody Preset preset) {
+        return profileService.updatePreset(ownerId, profileId, preset);
     }
 }
