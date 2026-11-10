@@ -5,6 +5,7 @@ import com.sleepcare.server.common.error.ErrorCode;
 import com.sleepcare.server.profile.dto.Preset;
 import com.sleepcare.server.profile.dto.ProfileCreateRequest;
 import com.sleepcare.server.profile.dto.ProfileListResponse;
+import com.sleepcare.server.profile.dto.ProfileNameRequest;
 import com.sleepcare.server.profile.dto.ProfileResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -48,6 +49,13 @@ public class ProfileService {
 
     public ProfileResponse get(String ownerId, Long profileId) {
         return ProfileResponse.from(findOwned(ownerId, profileId));
+    }
+
+    @Transactional
+    public ProfileResponse rename(String ownerId, Long profileId, ProfileNameRequest request) {
+        Profile profile = findOwned(ownerId, profileId);
+        profile.rename(request.name(), Instant.now());
+        return ProfileResponse.from(profile);
     }
 
     // 없거나 다른 사용자의 프로필이면 404

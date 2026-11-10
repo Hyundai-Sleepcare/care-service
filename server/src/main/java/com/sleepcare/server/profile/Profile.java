@@ -58,6 +58,11 @@ public class Profile {
         this.updatedAt = now;
     }
 
+    public void rename(String name, Instant now) {
+        this.name = name;
+        this.updatedAt = now;
+    }
+
     public Long getProfileId() { return profileId; }
     public String getOwnerId() { return ownerId; }
     public String getName() { return name; }
