@@ -71,6 +71,11 @@ public class ProfileService {
         return ProfileResponse.from(profile);
     }
 
+    @Transactional
+    public void delete(String ownerId, Long profileId) {
+        profileRepository.delete(findOwned(ownerId, profileId));
+    }
+
     // 없거나 다른 사용자의 프로필이면 404
     private Profile findOwned(String ownerId, Long profileId) {
         return profileRepository.findByProfileIdAndOwnerId(profileId, ownerId)

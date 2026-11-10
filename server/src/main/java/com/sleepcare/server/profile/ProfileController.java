@@ -9,6 +9,7 @@ import com.sleepcare.server.profile.dto.ProfileResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -63,5 +64,13 @@ public class ProfileController {
             @PathVariable Long profileId,
             @Valid @RequestBody Preset preset) {
         return profileService.updatePreset(ownerId, profileId, preset);
+    }
+
+    @DeleteMapping("/{profileId}")
+    public ResponseEntity<Void> delete(
+            @RequestAttribute(OwnerIdInterceptor.ATTRIBUTE) String ownerId,
+            @PathVariable Long profileId) {
+        profileService.delete(ownerId, profileId);
+        return ResponseEntity.noContent().build();
     }
 }
