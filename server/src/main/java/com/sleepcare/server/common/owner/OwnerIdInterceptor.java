@@ -17,6 +17,12 @@ public class OwnerIdInterceptor implements HandlerInterceptor {
     private static final Pattern UUID_PATTERN = Pattern.compile(
             "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
 
+    private final OwnerService ownerService;
+
+    public OwnerIdInterceptor(OwnerService ownerService) {
+        this.ownerService = ownerService;
+    }
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String header = request.getHeader(HEADER);
@@ -27,6 +33,7 @@ public class OwnerIdInterceptor implements HandlerInterceptor {
         if (!UUID_PATTERN.matcher(ownerId).matches()) {
             throw new ApiException(ErrorCode.OWNER_ID_REQUIRED);
         }
+        ownerService.ensureExists(ownerId);
         request.setAttribute(ATTRIBUTE, ownerId);
         return true;
     }
