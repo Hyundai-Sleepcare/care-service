@@ -6,8 +6,7 @@ import com.sleepcare.server.common.owner.Owner;
 import com.sleepcare.server.common.owner.OwnerRepository;
 import com.sleepcare.server.profile.Profile;
 import com.sleepcare.server.profile.ProfileRepository;
-import com.sleepcare.server.seat.SeatRecentProfile;
-import com.sleepcare.server.seat.SeatRecentProfileRepository;
+import java.math.BigDecimal;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +22,10 @@ class RepositoryTest {
 
     @Autowired OwnerRepository ownerRepository;
     @Autowired ProfileRepository profileRepository;
-    @Autowired SeatRecentProfileRepository seatRecentProfileRepository;
 
     private Profile saveProfile(String ownerId, String name) {
-        return profileRepository.save(new Profile(ownerId, name, 1,
-                true, 2, false, 1, true, 128, true, Instant.now()));
+        return profileRepository.save(new Profile(ownerId, name, 128,
+                2, 0, new BigDecimal("23.5"), "AMBER", Instant.now()));
     }
 
     @Test
@@ -45,17 +43,14 @@ class RepositoryTest {
     }
 
     @Test
-    void 프로필_ID로_좌석_기록을_지운다() {
+    void 프리셋_값이_그대로_저장된다() {
         ownerRepository.save(new Owner(OWNER_A, Instant.now()));
-        Profile mom = saveProfile(OWNER_A, "엄마");
-        Profile dad = saveProfile(OWNER_A, "아빠");
-        seatRecentProfileRepository.save(new SeatRecentProfile(OWNER_A, "ROW_1_RIGHT", mom.getProfileId(), Instant.now()));
-        seatRecentProfileRepository.save(new SeatRecentProfile(OWNER_A, "ROW_2_LEFT", dad.getProfileId(), Instant.now()));
+        Profile saved = saveProfile(OWNER_A, "엄마");
+        profileRepository.flush();
 
-        seatRecentProfileRepository.deleteAllByProfileId(mom.getProfileId());
-
-        assertThat(seatRecentProfileRepository.findAllByOwnerIdOrderByAppliedAtDesc(OWNER_A))
-                .extracting(SeatRecentProfile::getSeat).containsExactly("ROW_2_LEFT");
-        assertThat(seatRecentProfileRepository.findByOwnerIdAndSeat(OWNER_A, "ROW_1_RIGHT")).isEmpty();
+        Profile found = profileRepository.findById(saved.getProfileId()).orElseThrow();
+        assertThat(found.getTemperatureCelsius()).isEqualByComparingTo("23.5");
+        assertThat(found.getAmbientLightMood()).isEqualTo("AMBER");
+        assertThat(found.getBackrestAngle()).isEqualTo(128);
     }
 }
