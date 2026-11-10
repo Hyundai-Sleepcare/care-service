@@ -4,6 +4,7 @@ import com.sleepcare.server.common.error.ApiException;
 import com.sleepcare.server.common.error.ErrorCode;
 import com.sleepcare.server.profile.dto.Preset;
 import com.sleepcare.server.profile.dto.ProfileCreateRequest;
+import com.sleepcare.server.profile.dto.ProfileListResponse;
 import com.sleepcare.server.profile.dto.ProfileResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,6 +38,22 @@ public class ProfileService {
                 preset.ambientLight().mood().name(),
                 Instant.now());
         return ProfileResponse.from(profileRepository.save(profile));
+    }
+
+    public ProfileListResponse list(String ownerId) {
+        return new ProfileListResponse(profileRepository.findAllByOwnerIdOrderByProfileIdAsc(ownerId).stream()
+                .map(ProfileResponse::from)
+                .toList());
+    }
+
+    public ProfileResponse get(String ownerId, Long profileId) {
+        return ProfileResponse.from(findOwned(ownerId, profileId));
+    }
+
+    // 없거나 다른 사용자의 프로필이면 404
+    private Profile findOwned(String ownerId, Long profileId) {
+        return profileRepository.findByProfileIdAndOwnerId(profileId, ownerId)
+                .orElseThrow(() -> new ApiException(ErrorCode.PROFILE_NOT_FOUND));
     }
 
     // 23.50 → 23.5, 24 → 24.0. DB(DECIMAL(3,1))와 같은 모양으로 맞춘다. 0.5 단위 검사를 통과한 값이라 반올림은 일어나지 않는다

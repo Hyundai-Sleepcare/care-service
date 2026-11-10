@@ -2,10 +2,13 @@ package com.sleepcare.server.profile;
 
 import com.sleepcare.server.common.owner.OwnerIdInterceptor;
 import com.sleepcare.server.profile.dto.ProfileCreateRequest;
+import com.sleepcare.server.profile.dto.ProfileListResponse;
 import com.sleepcare.server.profile.dto.ProfileResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,5 +31,17 @@ public class ProfileController {
             @Valid @RequestBody ProfileCreateRequest request) {
         ProfileResponse response = profileService.create(ownerId, request);
         return ResponseEntity.created(URI.create("/api/v1/profiles/" + response.profileId())).body(response);
+    }
+
+    @GetMapping
+    public ProfileListResponse list(@RequestAttribute(OwnerIdInterceptor.ATTRIBUTE) String ownerId) {
+        return profileService.list(ownerId);
+    }
+
+    @GetMapping("/{profileId}")
+    public ProfileResponse get(
+            @RequestAttribute(OwnerIdInterceptor.ATTRIBUTE) String ownerId,
+            @PathVariable Long profileId) {
+        return profileService.get(ownerId, profileId);
     }
 }
