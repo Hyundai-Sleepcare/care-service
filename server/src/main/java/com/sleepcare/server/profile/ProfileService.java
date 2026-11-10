@@ -5,6 +5,7 @@ import com.sleepcare.server.common.error.ErrorCode;
 import com.sleepcare.server.profile.dto.Preset;
 import com.sleepcare.server.profile.dto.ProfileCreateRequest;
 import com.sleepcare.server.profile.dto.ProfileListResponse;
+import com.sleepcare.server.profile.dto.ProfileNameRequest;
 import com.sleepcare.server.profile.dto.ProfileResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -48,6 +49,31 @@ public class ProfileService {
 
     public ProfileResponse get(String ownerId, Long profileId) {
         return ProfileResponse.from(findOwned(ownerId, profileId));
+    }
+
+    @Transactional
+    public ProfileResponse rename(String ownerId, Long profileId, ProfileNameRequest request) {
+        Profile profile = findOwned(ownerId, profileId);
+        profile.rename(request.name(), Instant.now());
+        return ProfileResponse.from(profile);
+    }
+
+    @Transactional
+    public ProfileResponse updatePreset(String ownerId, Long profileId, Preset preset) {
+        Profile profile = findOwned(ownerId, profileId);
+        profile.updatePreset(
+                preset.backrest().angle(),
+                preset.seatHeat().level(),
+                preset.seatVent().level(),
+                toOneDecimal(preset.temperature().targetCelsius()),
+                preset.ambientLight().mood().name(),
+                Instant.now());
+        return ProfileResponse.from(profile);
+    }
+
+    @Transactional
+    public void delete(String ownerId, Long profileId) {
+        profileRepository.delete(findOwned(ownerId, profileId));
     }
 
     // 없거나 다른 사용자의 프로필이면 404
