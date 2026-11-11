@@ -31,51 +31,32 @@ fun SettingScreen(
 ) {
     var selectedSubTab by remember(initialSubTab) { mutableStateOf(initialSubTab) }
 
-    // 조절 가능한 상태 변수들 (기본값은 현재 프로필 기준)
-    var backrestAngle by remember(currentProfile.profileId) {
-        mutableIntStateOf(if (currentProfile.backrestSummary.contains("릴랙스")) 128 else 110)
+    // 조절 가능한 상태 변수들 (문자열 파싱 없이 프로필의 실제 숫자/코드를 그대로 사용!)
+    var backrestAngle by remember(currentProfile) {
+        mutableIntStateOf(currentProfile.backrestAngle)
     }
-    var seatHeatLevel by remember(currentProfile.profileId) {
-        mutableIntStateOf(
-            when {
-                currentProfile.seatHeatSummary.contains("1단") -> 1
-                currentProfile.seatHeatSummary.contains("2단") -> 2
-                currentProfile.seatHeatSummary.contains("3단") -> 3
-                else -> 0
-            }
-        )
+    var seatHeatLevel by remember(currentProfile) {
+        mutableIntStateOf(currentProfile.seatHeatLevel)
     }
-    var seatVentLevel by remember(currentProfile.profileId) {
-        mutableIntStateOf(if (currentProfile.seatHeatSummary.contains("통풍 1단")) 1 else 0)
+    var seatVentLevel by remember(currentProfile) {
+        mutableIntStateOf(currentProfile.seatVentLevel)
     }
-    var targetTemp by remember(currentProfile.profileId) {
-        val parsed = currentProfile.tempSummary.replace("°C", "").toDoubleOrNull() ?: 23.0
-        mutableDoubleStateOf(parsed)
+    var targetTemp by remember(currentProfile) {
+        mutableDoubleStateOf(currentProfile.targetCelsius)
     }
-    var selectedMood by remember(currentProfile.profileId) {
-        mutableStateOf(currentProfile.moodSummary)
+    var selectedMood by remember(currentProfile) {
+        mutableStateOf(currentProfile.mood)
     }
     var showSavedToast by remember { mutableStateOf(false) }
 
-    // 현재 조절된 값들로 새로운 SleepProfile 객체를 만드는 헬퍼 함수
+    // 현재 조절된 숫자/코드 값들로 새로운 SleepProfile 객체를 만드는 헬퍼 함수
     fun buildUpdatedProfile(): SleepProfile {
-        val backrestText = when {
-            backrestAngle >= 125 -> "등받이 릴랙스"
-            backrestAngle >= 115 -> "등받이 중간"
-            else -> "등받이 표준"
-        }
-        val heatText = when {
-            seatHeatLevel > 0 -> "열선 ${seatHeatLevel}단계"
-            seatVentLevel > 0 -> "통풍 ${seatVentLevel}단계"
-            else -> "열선 OFF"
-        }
-        val tempText = String.format(Locale.US, "%.1f°C", targetTemp)
-
         return currentProfile.copy(
-            backrestSummary = backrestText,
-            seatHeatSummary = heatText,
-            tempSummary = tempText,
-            moodSummary = selectedMood
+            backrestAngle = backrestAngle,
+            seatHeatLevel = if (seatVentLevel > 0) 0 else seatHeatLevel,
+            seatVentLevel = if (seatHeatLevel > 0) 0 else seatVentLevel,
+            targetCelsius = targetTemp,
+            mood = selectedMood
         )
     }
 
@@ -228,7 +209,7 @@ fun SettingScreen(
             // 우측 영역: PLEOS INTEGRATED AMBIANCE 실시간 요약 및 가이드
             PleosAmbianceSummaryCard(
                 tempText = String.format(Locale.US, "%.1f°C (무풍 미풍)", targetTemp),
-                moodText = "$selectedMood 20%",
+                moodText = "${selectedMood.displayName} 20%",
                 angleText = "${backrestAngle}° ${if (backrestAngle >= 125) "릴랙스" else "표준"}",
                 modifier = Modifier
                     .weight(1f)
@@ -644,12 +625,10 @@ fun ClimateControlCard(
 
 @Composable
 fun LightControlCard(
-    selectedMood: String,
-    onMoodSelected: (String) -> Unit,
+    selectedMood: MoodType,
+    onMoodSelected: (MoodType) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val moodOptions = listOf("앰버 무드", "소프트블루", "라벤더 무드", "무드등 OFF")
-
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(20.dp))
@@ -682,7 +661,7 @@ fun LightControlCard(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            moodOptions.forEach { mood ->
+            MoodType.entries.forEach { mood ->
                 val isSelected = (mood == selectedMood)
                 Box(
                     modifier = Modifier
@@ -700,7 +679,7 @@ fun LightControlCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "☀️ $mood",
+                        text = "☀️ ${mood.displayName}",
                         color = if (isSelected) AmberPrimary else TextPrimary,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold

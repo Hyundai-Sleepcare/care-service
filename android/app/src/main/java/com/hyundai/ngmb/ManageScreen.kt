@@ -25,8 +25,8 @@ import com.hyundai.ngmb.ui.theme.*
 fun ManageScreen(
     profiles: List<SleepProfile>,
     onAddProfile: (name: String) -> Unit,
-    onRenameProfile: (profileId: Int, newName: String) -> Unit,
-    onDeleteProfile: (profileId: Int) -> Unit,
+    onRenameProfile: (profileId: Long, newName: String) -> Unit,
+    onDeleteProfile: (profileId: Long) -> Unit,
     onEditPresetClick: (SleepProfile) -> Unit
 ) {
     // 피그마 Screen 05 상단 '운전석 슬립 불가 및 등받이 안전 안내' 배너 표시 여부
@@ -193,20 +193,38 @@ fun ManageScreen(
             }
 
             // 3. 등록된 프로필 목록 (스크롤 가능)
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                profiles.forEach { profile ->
-                    ManageProfileRow(
-                        profile = profile,
-                        canDelete = profiles.size > 1,
-                        onRenameClick = { renameTarget = profile },
-                        onEditPresetClick = { onEditPresetClick(profile) },
-                        onDeleteClick = { deleteTarget = profile }
+            if (profiles.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(SleepSurface)
+                        .border(1.dp, SleepBorder, RoundedCornerShape(18.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "등록된 프로필이 없습니다. 우측 상단 [+ 새 프로필 추가] 버튼을 눌러 첫 프로필을 생성해 주세요.",
+                        color = TextSecondary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium
                     )
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    profiles.forEach { profile ->
+                        ManageProfileRow(
+                            profile = profile,
+                            canDelete = true,
+                            onRenameClick = { renameTarget = profile },
+                            onEditPresetClick = { onEditPresetClick(profile) },
+                            onDeleteClick = { deleteTarget = profile }
+                        )
+                    }
                 }
             }
         }
