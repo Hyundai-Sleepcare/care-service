@@ -30,7 +30,7 @@ object SleepCareApiClient {
     private const val TAG = "SleepCareApi"
 
     // 에뮬레이터에서 로컬 서버 접속 주소 (배포 APK 제출 시 Railway 주소로 교체)
-    private const val BASE_URL = "http://10.0.2.2:8080/api/v1/profiles"
+    private const val BASE_URL = "https://backend-production-910889bb.up.railway.app/api/v1/profiles"
     private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
     private val OWNER_ID_KEY = stringPreferencesKey("x_owner_id")
 
