@@ -27,7 +27,7 @@ enum class SeatZone(
     ),
     PASSENGER(
         label = "조수석",
-        description = "도어 차광막 및 시트 릴렉스 모듈이 동기화됩니다.",
+        description = "표준 착석 상태 · 프리셋 선택 가능",
         isSelectable = true
     ),
     REAR_LEFT(

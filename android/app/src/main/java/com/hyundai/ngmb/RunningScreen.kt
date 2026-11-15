@@ -76,12 +76,6 @@ fun RunningScreen(
                         )
                     }
                 }
-
-                // 우측 상태 뱃지 2개 (도어 커튼 닫힘 / 알림 음소거)
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    StatusBadgeChip(text = "🛡️ 도어 커튼 닫힘")
-                    StatusBadgeChip(text = "🔇 알림 음소거")
-                }
             }
 
             // 2. 가운데 3개 작동 상태 카드 (좌석 / 공조 / 조명)
@@ -106,7 +100,7 @@ fun RunningScreen(
                     icon = "🌡️",
                     badgeText = "저소음 집중",
                     category = "공조",
-                    statusValue = "${currentProfile.tempSummary} · 풍량 2단계",
+                    statusValue = "${currentProfile.tempSummary} · 풍량 2단계(설정 예시)",
                     onAdjustClick = { onAdjustClick(SettingSubTab.CLIMATE) },
                     modifier = Modifier
                         .weight(1f)
@@ -117,7 +111,7 @@ fun RunningScreen(
                     icon = "💡",
                     badgeText = "멜라토닌 보호",
                     category = "조명",
-                    statusValue = "${currentProfile.moodSummary} 30% · 독서등 OFF",
+                    statusValue = currentProfile.moodSummary,
                     onAdjustClick = { onAdjustClick(SettingSubTab.LIGHT) },
                     modifier = Modifier
                         .weight(1f)
@@ -172,13 +166,9 @@ fun RunningScreen(
         if (showExitModal) {
             SleepModeExitModal(
                 selectedSeat = selectedSeat,
-                currentProfile = currentProfile,
-                onRestoreAndExit = {
+                onExit = {
                     showExitModal = false
-                    onExitSleepMode(true)
-                },
-                onKeepAndExit = {
-                    showExitModal = false
+                    // 차량 설정 복원은 Vehicle SDK 연동 후 제공 예정이므로 복원 없이 종료
                     onExitSleepMode(false)
                 },
                 onCancel = { showExitModal = false }
@@ -286,9 +276,7 @@ fun RunningStatusCard(
 @Composable
 fun SleepModeExitModal(
     selectedSeat: SeatZone,
-    currentProfile: SleepProfile,
-    onRestoreAndExit: () -> Unit,
-    onKeepAndExit: () -> Unit,
+    onExit: () -> Unit,
     onCancel: () -> Unit
 ) {
     Box(
@@ -356,152 +344,48 @@ fun SleepModeExitModal(
                 }
             }
 
-            // 두 가지 종료 옵션 카드 (이전 설정 복원 vs 현재 설정 유지)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            // 종료 옵션 카드 (슬립 모드 종료 한 가지)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(SleepCardSelected)
+                    .border(1.5.dp, AmberPrimary, RoundedCornerShape(18.dp))
+                    .clickable { onExit() }
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // 옵션 1: 이전 설정 복원 (추천 옵션)
-                Column(
+                Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(SleepCardSelected)
-                        .border(1.5.dp, AmberPrimary, RoundedCornerShape(18.dp))
-                        .clickable { onRestoreAndExit() }
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                        .size(38.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(SleepSurface),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.Top
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(SleepSurface),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = "↺", color = AmberPrimary, fontSize = 18.sp)
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(AmberPrimary)
-                                .padding(horizontal = 8.dp, vertical = 3.dp)
-                        ) {
-                            Text(
-                                text = "추천 옵션",
-                                color = TextOnAmber,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    Text(
-                        text = "이전 설정 복원",
-                        color = TextPrimary,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "슬립 진입 전 상태로 원상 복귀",
-                        color = AmberPrimary,
-                        fontSize = 12.sp
-                    )
-
-                    Text(
-                        text = "✓ 공조 온도 정상 모드 복귀\n✓ 시트 열선 및 무드 조명 원래 상태 복귀",
-                        color = TextSecondary,
-                        fontSize = 12.sp,
-                        lineHeight = 18.sp
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(SleepBackground.copy(alpha = 0.6f))
-                            .padding(10.dp)
-                    ) {
-                        Text(
-                            text = "ⓘ 등받이 각도는 주행 안전을 위해 정차 후 별도 복원됩니다.",
-                            color = TextSecondary,
-                            fontSize = 11.sp
-                        )
-                    }
+                    Text(text = "⏻", color = AmberPrimary, fontSize = 18.sp)
                 }
 
-                // 옵션 2: 현재 설정 유지
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(SleepCardSurface)
-                        .border(1.dp, SleepBorder, RoundedCornerShape(18.dp))
-                        .clickable { onKeepAndExit() }
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(SleepSurface),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(text = "🛋️", fontSize = 16.sp)
-                    }
-
-                    Text(
-                        text = "현재 설정 유지",
-                        color = TextPrimary,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "현재의 편안한 상태 그대로 유지",
-                        color = TextSecondary,
-                        fontSize = 12.sp
-                    )
-
-                    Text(
-                        text = "현재 조절된 시트 각도, 온도(${currentProfile.tempSummary}) 및 앰비언트 라이트 조도를 그대로 유지한 채 슬립 모드만 종료합니다.",
-                        color = TextSecondary,
-                        fontSize = 12.sp,
-                        lineHeight = 18.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(SleepBackground.copy(alpha = 0.6f))
-                            .padding(10.dp)
-                    ) {
-                        Text(
-                            text = "🌙 수면 타이머 및 모니터링만 비활성화",
-                            color = TextSecondary,
-                            fontSize = 11.sp
-                        )
-                    }
-                }
+                Text(
+                    text = "슬립 모드 종료",
+                    color = TextPrimary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${selectedSeat.label}의 슬립 모드 실행 상태를 종료합니다.",
+                    color = TextSecondary,
+                    fontSize = 12.sp
+                )
             }
 
-            // 모달 하단 바 (안전 규정 안내 + 취소 버튼)
+            // 모달 하단 바 (좌석 안내 + 취소 버튼)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "🚘 ${selectedSeat.label} 제어 화면 · 안전 규정 준수 작동 중",
+                    text = "🚘 ${selectedSeat.label} 슬립 모드",
                     color = TextSecondary,
                     fontSize = 12.sp
                 )

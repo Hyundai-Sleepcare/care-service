@@ -100,7 +100,7 @@ fun SettingScreen(
                 }
             }
 
-            // 우측 '현대 Pleos In-Vehicle SDK 연동됨' 뱃지
+            // 우측 '차량 제어 연동 예정' 뱃지
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(20.dp))
@@ -111,7 +111,7 @@ fun SettingScreen(
             ) {
                 Text(text = "● ", color = AmberPrimary, fontSize = 10.sp)
                 Text(
-                    text = "현대 Pleos In-Vehicle SDK 연동됨",
+                    text = "차량 제어 연동 예정",
                     color = TextSecondary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
@@ -651,7 +651,7 @@ fun LightControlCard(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "수면 진입 시 눈부심을 줄이고 슬립 모드 해제 시 원래 조명 상태로 자동 복귀합니다.",
+                text = "수면에 맞는 무드 조명을 선택합니다.",
                 color = TextSecondary,
                 fontSize = 13.sp
             )
@@ -779,7 +779,7 @@ fun PleosAmbianceSummaryCard(
                 .padding(12.dp)
         ) {
             Text(
-                text = "ⓘ 동승자 최적 각도 가이드\n125°~130° 구간은 척추 부담을 40% 저감하는 최적 수면 권장 범위입니다.",
+                text = "ⓘ 등받이는 차량이 허용하는 작동 조건과 범위 안에서 조절합니다.",
                 color = TextSecondary,
                 fontSize = 11.sp,
                 lineHeight = 16.sp

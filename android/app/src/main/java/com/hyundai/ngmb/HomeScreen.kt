@@ -383,7 +383,7 @@ fun TargetPassengerCard(
                 text = if (isRunning) {
                     "'${currentProfile.name}' 프리셋으로 슬립 케어가 작동 중입니다."
                 } else {
-                    "도어 차광막 및 시트 릴렉스 모듈이 동기화됩니다."
+                    "선택한 좌석에 적용할 슬립 프리셋을 확인하세요."
                 },
                 color = if (isRunning) AmberPrimary else TextSecondary,
                 fontSize = 13.sp
@@ -502,7 +502,6 @@ fun TargetPassengerCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = "🔇 헤드레스트 소프트 사운드 활성화", color = TextSecondary, fontSize = 12.sp)
                 Text(text = "🌙 눈부심 차단 모드", color = TextSecondary, fontSize = 12.sp)
             }
 
